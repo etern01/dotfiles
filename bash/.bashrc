@@ -16,8 +16,8 @@ HISTCONTROL=ignoreboth:erasedups
 HISTTIMEFORMAT="%F %T "
 shopt -s histappend
 
-# Shared history between sessions
-PROMPT_COMMAND="history -a; history -c; history -r; ${PROMPT_COMMAND:-}"
+# Shared history between sessions (set after loading prompt)
+# PROMPT_COMMAND is set below after sourcing .bash_prompt
 
 # ============================================
 # Shell options
@@ -57,6 +57,11 @@ fi
 # Load prompt configuration
 # ============================================
 source ~/.bash_prompt
+
+# ============================================
+# Set PROMPT_COMMAND (history + prompt)
+# ============================================
+PROMPT_COMMAND="history -a; history -c; history -r; build_prompt; ${PROMPT_COMMAND:-}"
 
 # ============================================
 # Load aliases

@@ -1,44 +1,61 @@
-# ~/.bash_prompt - Custom prompt configuration
-# Powerline-style prompt with root/non-root distinction
+# ~/.bash_prompt - Agnoster-style prompt for bash
+# Powerline segments: [user@host] [path] [git] [env]
 
 # ============================================
-# Colors (without \[\] - added in PS1)
+# Colors
 # ============================================
-RESET='\033[0m'
-BOLD='\033[1m'
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-BLUE='\033[0;34m'
-MAGENTA='\033[0;35m'
-CYAN='\033[0;36m'
-WHITE='\033[0;37m'
-GRAY='\033[0;90m'
+RESET='\[\033[0m\]'
+BOLD='\[\033[1m\]'
 
-# Background colors
-BG_RED='\033[41m'
-BG_GREEN='\033[42m'
-BG_BLUE='\033[44m'
-BG_YELLOW='\033[43m'
-BG_MAGENTA='\033[45m'
-BG_CYAN='\033[46m'
-BG_GRAY='\033[100m'
+# Foreground
+BLACK='\[\033[0;30m\]'
+RED='\[\033[0;31m\]'
+GREEN='\[\033[0;32m\]'
+YELLOW='\[\033[0;33m\]'
+BLUE='\[\033[0;34m\]'
+MAGENTA='\[\033[0;35m\]'
+CYAN='\[\033[0;36m\]'
+WHITE='\[\033[0;37m\]'
+GRAY='\[\033[0;90m\]'
 
-# Powerline separators
-SEP_RIGHT=""
-SEP_LEFT=""
-GIT_SYMBOL=""
+# Background
+BG_BLACK='\[\033[40m\]'
+BG_RED='\[\033[41m\]'
+BG_GREEN='\[\033[42m\]'
+BG_YELLOW='\[\033[43m\]'
+BG_BLUE='\[\033[44m\]'
+BG_MAGENTA='\[\033[45m\]'
+BG_CYAN='\[\033[46m\]'
+BG_WHITE='\[\033[47m\]'
+BG_GRAY='\[\033[100m\]'
 
-# Fallback to ASCII if powerline fonts not available
-if [ -z "${POWERLINE_FONTS:-}" ]; then
-    case "$TERM" in
-        *linux|*vt*)
-            SEP_RIGHT=">"
-            SEP_LEFT="<"
-            GIT_SYMBOL="*"
-            ;;
-    esac
-fi
+# Powerline separator
+SEGMENT_SEPARATOR=""
+
+# ============================================
+# Segment builder
+# ============================================
+prompt_segment() {
+    local bg=$1
+    local fg=$2
+    local content=$3
+
+    if [[ -n "$CURRENT_BG" && "$CURRENT_BG" != "$bg" ]]; then
+        PS1+="${bg}${CURRENT_BG}${SEGMENT_SEPARATOR}${RESET}${bg} "
+    else
+        PS1+="${bg} "
+    fi
+
+    PS1+="${fg}${content}${RESET}"
+    CURRENT_BG="$bg"
+}
+
+prompt_end() {
+    if [[ -n "$CURRENT_BG" ]]; then
+        PS1+="${RESET}${CURRENT_BG}${SEGMENT_SEPARATOR}${RESET}"
+    fi
+    PS1+=" "
+}
 
 # ============================================
 # Environment detection
@@ -59,10 +76,14 @@ detect_env() {
 # Git branch
 # ============================================
 parse_git_branch() {
-    local branch
-    branch=$(git symbolic-ref --short HEAD 2>/dev/null || git describe --tags --exact-match 2>/dev/null)
-    if [ -n "$branch" ]; then
-        echo "$branch"
+    git symbolic-ref --short HEAD 2>/dev/null || git describe --tags --exact-match 2>/dev/null
+}
+
+# Git dirty status
+parse_git_dirty() {
+    local status=$(git status --porcelain 2>/dev/null)
+    if [[ -n "$status" ]]; then
+        echo " ✚"
     fi
 }
 
@@ -70,89 +91,65 @@ parse_git_branch() {
 # Build prompt
 # ============================================
 build_prompt() {
-    # Save exit code FIRST before any other command
     local last_exit=$?
 
-    local git_branch=$(parse_git_branch)
-    local env=$(detect_env)
+    CURRENT_BG=""
 
-    # Root detection
-    local is_root=0
-    if [ "$EUID" -eq 0 ]; then
-        is_root=1
+    # Exit code segment
+    if [[ $last_exit -ne 0 ]]; then
+        prompt_segment "$BG_RED" "$WHITE" " ✘ $last_exit "
     fi
 
-    # ============================================
-    # Exit code indicator
-    # ============================================
-    local exit_segment=""
-    if [ $last_exit -ne 0 ]; then
-        exit_segment="\[$BG_RED\]\[$WHITE\] ✘ \[$RESET\]\[$BG_GRAY\]\[$WHITE\]$SEP_RIGHT\[$RESET\]"
+    # User@host segment (only if not default user or SSH)
+    if [[ "$USER" != "$DEFAULT_USER" || -n "$SSH_CLIENT" ]]; then
+        if [[ $EUID -eq 0 ]]; then
+            prompt_segment "$BG_YELLOW" "$BLACK" " \u@\h "
+        else
+            prompt_segment "$BG_BLUE" "$WHITE" " \u@\h "
+        fi
     fi
 
-    # ============================================
-    # User@Host segment
-    # ============================================
-    local user_bg
-    local user_fg
-    if [ $is_root -eq 1 ]; then
-        user_bg=$BG_RED
-        user_fg=$WHITE
-    else
-        user_bg=$BG_GREEN
-        user_fg=$WHITE
-    fi
-
-    local user_segment="\[$user_bg\]\[$user_fg\] \u@\h \[$RESET\]"
-
-    # ============================================
     # Path segment
-    # ============================================
-    local path_segment="\[$BG_BLUE\]\[$WHITE\] \w \[$RESET\]\[$BG_YELLOW\]\[$WHITE\]$SEP_RIGHT\[$RESET\]"
+    prompt_segment "$BG_CYAN" "$BLACK" " \w "
 
-    # ============================================
     # Git segment
-    # ============================================
-    local git_segment=""
-    if [ -n "$git_branch" ]; then
-        git_segment="\[$BG_YELLOW\]\[$BLACK\] $GIT_SYMBOL $git_branch \[$RESET\]\[$BG_GRAY\]\[$WHITE\]$SEP_RIGHT\[$RESET\]"
+    local branch=$(parse_git_branch)
+    if [[ -n "$branch" ]]; then
+        local dirty=$(parse_git_dirty)
+        local git_info="  $branch$dirty "
+
+        if [[ -n "$dirty" ]]; then
+            prompt_segment "$BG_YELLOW" "$BLACK" "$git_info"
+        else
+            prompt_segment "$BG_GREEN" "$BLACK" "$git_info"
+        fi
     fi
 
-    # ============================================
     # Environment segment
-    # ============================================
-    local env_segment=""
-    local env_bg=""
-    local env_fg=$WHITE
-    case "$env" in
-        PROD)
-            env_bg=$BG_RED
-            env_segment="\[$env_bg\]\[$env_fg\] $env \[$RESET\]"
-            ;;
-        STAGE)
-            env_bg=$BG_YELLOW
-            env_fg=$BLACK
-            env_segment="\[$env_bg\]\[$env_fg\] $env \[$RESET\]"
-            ;;
-        DEV)
-            env_bg=$BG_CYAN
-            env_segment="\[$env_bg\]\[$env_fg\] $env \[$RESET\]"
-            ;;
-    esac
-
-    # ============================================
-    # Prompt symbol
-    # ============================================
-    local prompt_symbol="\[$GREEN\]\\$\[$RESET\] "
-    if [ $is_root -eq 1 ]; then
-        prompt_symbol="\[$RED\]#\[$RESET\] "
+    local env=$(detect_env)
+    if [[ -n "$env" ]]; then
+        case "$env" in
+            PROD)
+                prompt_segment "$BG_RED" "$WHITE" " $env "
+                ;;
+            STAGE)
+                prompt_segment "$BG_YELLOW" "$BLACK" " $env "
+                ;;
+            DEV)
+                prompt_segment "$BG_CYAN" "$BLACK" " $env "
+                ;;
+        esac
     fi
 
-    # ============================================
-    # Build PS1
-    # ============================================
-    PS1="${exit_segment}${user_segment}\[$BG_BLUE\]\[$WHITE\]$SEP_RIGHT\[$RESET\]${path_segment}${git_segment}${env_segment}\n${prompt_symbol}"
+    prompt_end
 
-    # Set window title
+    # New line + prompt symbol
+    if [[ $EUID -eq 0 ]]; then
+        PS1+="# "
+    else
+        PS1+="$ "
+    fi
+
+    # Window title
     PS1="\[\e]0;\u@\h: \w\a\]${PS1}"
 }

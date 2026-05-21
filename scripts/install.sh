@@ -122,6 +122,28 @@ install_vim_plugins() {
     vim +PlugInstall +qall 2>/dev/null || true
 }
 
+# Install Oh My Bash
+install_oh_my_bash() {
+    echo ""
+    echo "Installing Oh My Bash..."
+
+    if [ ! -d "$HOME/.oh-my-bash" ]; then
+        bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh)" "" --unattended
+        echo "Oh My Bash installed!"
+    else
+        echo "Oh My Bash already installed"
+    fi
+
+    # Set agnoster theme
+    if [ -f "$HOME/.bashrc" ]; then
+        if ! grep -q "OSH_THEME=" "$HOME/.bashrc" 2>/dev/null; then
+            echo "" >> "$HOME/.bashrc"
+            echo "# Oh My Bash theme" >> "$HOME/.bashrc"
+            echo "OSH_THEME=\"agnoster\"" >> "$HOME/.bashrc"
+        fi
+    fi
+}
+
 # Main
 echo ""
 echo "Step 1: Installing packages..."
@@ -134,6 +156,10 @@ create_symlinks
 echo ""
 echo "Step 3: Installing vim plugins..."
 install_vim_plugins
+
+echo ""
+echo "Step 4: Installing Oh My Bash..."
+install_oh_my_bash
 
 echo ""
 echo "========================================="

@@ -157,6 +157,24 @@
       tags: ssh
 
     # ============================================
+    # Install Oh My Bash
+    # ============================================
+    - name: Check if Oh My Bash is installed
+      stat:
+        path: "{{ ansible_env.HOME }}/.oh-my-bash/oh-my-bash.sh"
+      register: omb_check
+      become: false
+
+    - name: Install Oh My Bash
+      shell: |
+        bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh)" "" --unattended
+      args:
+        creates: "{{ ansible_env.HOME }}/.oh-my-bash/oh-my-bash.sh"
+      become: false
+      when: not omb_check.stat.exists
+      tags: omb
+
+    # ============================================
     # Configure bash as default shell
     # ============================================
     - name: Set bash as default shell

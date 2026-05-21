@@ -1,4 +1,4 @@
-# ~/.bashrc - Main configuration
+# ~/.bashrc - Main configuration with Oh My Bash
 # Sourced by interactive bash shells
 
 # If not running interactively, don't do anything
@@ -15,9 +15,6 @@ HISTFILESIZE=20000
 HISTCONTROL=ignoreboth:erasedups
 HISTTIMEFORMAT="%F %T "
 shopt -s histappend
-
-# Shared history between sessions (set after loading prompt)
-# PROMPT_COMMAND is set below after sourcing .bash_prompt
 
 # ============================================
 # Shell options
@@ -51,19 +48,6 @@ export LESS="-R -i -M -S -x4"
 # ============================================
 if command -v direnv &>/dev/null; then
     eval "$(direnv hook bash)"
-fi
-
-# ============================================
-# Load prompt configuration
-# ============================================
-source ~/.bash_prompt
-
-# ============================================
-# Set PROMPT_COMMAND (history + prompt)
-# ============================================
-# Use a guard to prevent accumulation on multiple source
-if [[ "$PROMPT_COMMAND" != *"build_prompt"* ]]; then
-    PROMPT_COMMAND="history -a; history -c; history -r; build_prompt; ${PROMPT_COMMAND:-}"
 fi
 
 # ============================================
@@ -103,7 +87,6 @@ fi
 # SSH agent forwarding
 # ============================================
 if [ -z "$SSH_AUTH_SOCK" ]; then
-    # Check for a running ssh-agent
     if [ -S "$HOME/.ssh/agent.sock" ]; then
         export SSH_AUTH_SOCK="$HOME/.ssh/agent.sock"
     fi
@@ -134,4 +117,22 @@ fi
 if command -v tmux &>/dev/null && [ -z "$TMUX" ] && [ -n "$SSH_CLIENT" ]; then
     tmux attach -t main 2>/dev/null || tmux new-session -s main
     exit
+fi
+
+# ============================================
+# Oh My Bash
+# ============================================
+if [ -f "$HOME/.oh-my-bash/oh-my-bash.sh" ]; then
+    OSH="$HOME/.oh-my-bash"
+    OSH_THEME="agnoster"
+
+    # Plugins
+    plugins=(
+        git
+        docker
+        fzf
+        sudo
+    )
+
+    source "$OSH/oh-my-bash.sh"
 fi

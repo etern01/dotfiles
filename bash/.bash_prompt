@@ -1,61 +1,28 @@
 # ~/.bash_prompt - Agnoster-style prompt for bash
-# Powerline segments: [user@host] [path] [git] [env]
+# Powerline segments with proper bash escape sequences
 
 # ============================================
-# Colors
+# Colors (bash PS1 format with \[ \])
 # ============================================
-RESET='\[\033[0m\]'
-BOLD='\[\033[1m\]'
+RESET='\[\e[0m\]'
 
 # Foreground
-BLACK='\[\033[0;30m\]'
-RED='\[\033[0;31m\]'
-GREEN='\[\033[0;32m\]'
-YELLOW='\[\033[0;33m\]'
-BLUE='\[\033[0;34m\]'
-MAGENTA='\[\033[0;35m\]'
-CYAN='\[\033[0;36m\]'
-WHITE='\[\033[0;37m\]'
-GRAY='\[\033[0;90m\]'
+BLACK_FG='\[\e[30m\]'
+WHITE_FG='\[\e[37m\]'
 
 # Background
-BG_BLACK='\[\033[40m\]'
-BG_RED='\[\033[41m\]'
-BG_GREEN='\[\033[42m\]'
-BG_YELLOW='\[\033[43m\]'
-BG_BLUE='\[\033[44m\]'
-BG_MAGENTA='\[\033[45m\]'
-BG_CYAN='\[\033[46m\]'
-BG_WHITE='\[\033[47m\]'
-BG_GRAY='\[\033[100m\]'
+BLACK_BG='\[\e[40m\]'
+RED_BG='\[\e[41m\]'
+GREEN_BG='\[\e[42m\]'
+YELLOW_BG='\[\e[43m\]'
+BLUE_BG='\[\e[44m\]'
+MAGENTA_BG='\[\e[45m\]'
+CYAN_BG='\[\e[46m\]'
+WHITE_BG='\[\e[47m\]'
+GRAY_BG='\[\e[100m\]'
 
-# Powerline separator
-SEGMENT_SEPARATOR=""
-
-# ============================================
-# Segment builder
-# ============================================
-prompt_segment() {
-    local bg=$1
-    local fg=$2
-    local content=$3
-
-    if [[ -n "$CURRENT_BG" && "$CURRENT_BG" != "$bg" ]]; then
-        PS1+="${bg}${CURRENT_BG}${SEGMENT_SEPARATOR}${RESET}${bg} "
-    else
-        PS1+="${bg} "
-    fi
-
-    PS1+="${fg}${content}${RESET}"
-    CURRENT_BG="$bg"
-}
-
-prompt_end() {
-    if [[ -n "$CURRENT_BG" ]]; then
-        PS1+="${RESET}${CURRENT_BG}${SEGMENT_SEPARATOR}${RESET}"
-    fi
-    PS1+=" "
-}
+# Powerline separator (U+E0B0)
+SEG=$'\ue0b0'
 
 # ============================================
 # Environment detection
@@ -92,66 +59,123 @@ parse_git_dirty() {
 # ============================================
 build_prompt() {
     local last_exit=$?
-
-    # Reset PS1 to avoid accumulation
-    PS1=""
-    CURRENT_BG=""
-
-    # Exit code segment
-    if [[ $last_exit -ne 0 ]]; then
-        prompt_segment "$BG_RED" "$WHITE" " ✘ $last_exit "
-    fi
-
-    # User@host segment (only if not default user or SSH)
-    if [[ "$USER" != "$DEFAULT_USER" || -n "$SSH_CLIENT" ]]; then
-        if [[ $EUID -eq 0 ]]; then
-            prompt_segment "$BG_YELLOW" "$BLACK" " \u@\h "
-        else
-            prompt_segment "$BG_BLUE" "$WHITE" " \u@\h "
-        fi
-    fi
-
-    # Path segment
-    prompt_segment "$BG_CYAN" "$BLACK" " \w "
-
-    # Git segment
     local branch=$(parse_git_branch)
+    local env=$(detect_env)
+    local dirty=""
+
     if [[ -n "$branch" ]]; then
-        local dirty=$(parse_git_dirty)
-        local git_info="  $branch$dirty "
+        dirty=$(parse_git_dirty)
+    fi
+
+    # Start with empty PS1
+    local ps1=""
+
+    # ============================================
+    # Exit code segment
+    # ============================================
+    if [[ $last_exit -ne 0 ]]; then
+        ps1+="${RED_BG}${WHITE_FG} ✘ ${last_exit} ${RESET}"
+        ps1+="${RED_BG}${BLACK_FG}${SEG}${RESET}"
+    fi
+
+    # ============================================
+    # User@host segment
+    # ============================================
+    local user_bg="${BLUE_BG}"
+    local user_fg="${WHITE_FG}"
+
+    if [[ $EUID -eq 0 ]]; then
+        user_bg="${YELLOW_BG}"
+        user_fg="${BLACK_FG}"
+    fi
+
+    if [[ "$USER" != "$DEFAULT_USER" || -n "$SSH_CLIENT" ]]; then
+        ps1+="${user_bg}${user_fg} \u@\h ${RESET}"
+        ps1+="${user_bg}${BLACK_FG}${SEG}${RESET}"
+    fi
+
+    # ============================================
+    # Path segment
+    # ============================================
+    ps1+="${CYAN_BG}${BLACK_FG} \w ${RESET}"
+
+    # ============================================
+    # Git segment
+    # ============================================
+    if [[ -n "$branch" ]]; then
+        ps1+="${CYAN_BG}${BLACK_FG}${SEG}${RESET}"
 
         if [[ -n "$dirty" ]]; then
-            prompt_segment "$BG_YELLOW" "$BLACK" "$git_info"
+            ps1+="${YELLOW_BG}${BLACK_FG}  ${branch}${dirty} ${RESET}"
         else
-            prompt_segment "$BG_GREEN" "$BLACK" "$git_info"
+            ps1+="${GREEN_BG}${BLACK_FG}  ${branch}${dirty} ${RESET}"
         fi
     fi
 
+    # ============================================
     # Environment segment
-    local env=$(detect_env)
+    # ============================================
     if [[ -n "$env" ]]; then
+        # Close previous segment
+        if [[ -n "$branch" ]]; then
+            if [[ -n "$dirty" ]]; then
+                ps1+="${YELLOW_BG}${BLACK_FG}${SEG}${RESET}"
+            else
+                ps1+="${GREEN_BG}${BLACK_FG}${SEG}${RESET}"
+            fi
+        else
+            ps1+="${CYAN_BG}${BLACK_FG}${SEG}${RESET}"
+        fi
+
         case "$env" in
             PROD)
-                prompt_segment "$BG_RED" "$WHITE" " $env "
+                ps1+="${RED_BG}${WHITE_FG} ${env} ${RESET}"
                 ;;
             STAGE)
-                prompt_segment "$BG_YELLOW" "$BLACK" " $env "
+                ps1+="${YELLOW_BG}${BLACK_FG} ${env} ${RESET}"
                 ;;
             DEV)
-                prompt_segment "$BG_CYAN" "$BLACK" " $env "
+                ps1+="${CYAN_BG}${BLACK_FG} ${env} ${RESET}"
                 ;;
         esac
     fi
 
-    prompt_end
-
-    # New line + prompt symbol
-    if [[ $EUID -eq 0 ]]; then
-        PS1+="# "
+    # ============================================
+    # End prompt
+    # ============================================
+    # Close last segment with separator
+    if [[ -n "$env" ]]; then
+        case "$env" in
+            PROD)
+                ps1+="${RED_BG}${BLACK_FG}${SEG}${RESET}"
+                ;;
+            STAGE)
+                ps1+="${YELLOW_BG}${BLACK_FG}${SEG}${RESET}"
+                ;;
+            DEV)
+                ps1+="${CYAN_BG}${BLACK_FG}${SEG}${RESET}"
+                ;;
+        esac
+    elif [[ -n "$branch" ]]; then
+        if [[ -n "$dirty" ]]; then
+            ps1+="${YELLOW_BG}${BLACK_FG}${SEG}${RESET}"
+        else
+            ps1+="${GREEN_BG}${BLACK_FG}${SEG}${RESET}"
+        fi
     else
-        PS1+="$ "
+        ps1+="${CYAN_BG}${BLACK_FG}${SEG}${RESET}"
+    fi
+
+    # New line
+    ps1+="\n"
+
+    # Prompt symbol
+    if [[ $EUID -eq 0 ]]; then
+        ps1+="${RED_BG}${WHITE_FG} # ${RESET} "
+    else
+        ps1+="${GREEN_BG}${BLACK_FG} $ ${RESET} "
     fi
 
     # Window title
-    PS1="\[\e]0;\u@\h: \w\a\]${PS1}"
+    PS1="\[\e]0;\u@\h: \w\a\]${ps1}"
 }

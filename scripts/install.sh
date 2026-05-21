@@ -198,17 +198,22 @@ remove_atuin() {
 
     # Remove atuin init from .bashrc
     if [ -f "$HOME/.bashrc" ]; then
-        sed -i '/atuin init/d' "$HOME/.bashrc" 2>/dev/null
+        sed -i '/atuin/d' "$HOME/.bashrc" 2>/dev/null
     fi
 
-    # Remove atuin binary and config
+    # Remove atuin from PATH
     if [ -d "$HOME/.atuin" ]; then
         rm -rf "$HOME/.atuin"
     fi
 
-    # Remove atuin from PATH
-    if [ -d "$HOME/.atuin/bin" ]; then
-        rm -rf "$HOME/.atuin/bin"
+    # Remove atuin binary from common locations
+    rm -f "$HOME/.local/bin/atuin" 2>/dev/null
+    rm -f "/usr/local/bin/atuin" 2>/dev/null
+
+    # Clean PATH from atuin references
+    if [ -f "$HOME/.bashrc" ]; then
+        sed -i 's|$HOME/.atuin/bin:||g' "$HOME/.bashrc" 2>/dev/null
+        sed -i 's|/home/[^/]*/.atuin/bin:||g' "$HOME/.bashrc" 2>/dev/null
     fi
 
     echo "Atuin removed."

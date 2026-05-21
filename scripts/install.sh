@@ -135,18 +135,6 @@ install_tools() {
     fi
 }
 
-# Install Oh My Bash plugins from GitHub
-install_omb_plugin() {
-    local name=$1
-    local repo=$2
-    local target="$HOME/.oh-my-bash/plugins/$name"
-
-    if [ ! -d "$target" ]; then
-        echo "Installing OMB plugin: $name"
-        git clone "$repo" "$target" 2>/dev/null || echo "  Failed to install $name"
-    fi
-}
-
 # Install Oh My Bash
 install_oh_my_bash() {
     echo ""
@@ -159,15 +147,6 @@ install_oh_my_bash() {
         echo "Oh My Bash already installed"
     fi
 
-    # Install additional plugins
-    install_omb_plugin "docker" "https://github.com/ohmybash/oh-my-bash.git" "$HOME/.oh-my-bash/plugins/docker"
-    install_omb_plugin "docker-compose" "https://github.com/ohmybash/oh-my-bash.git" "$HOME/.oh-my-bash/plugins/docker-compose"
-    install_omb_plugin "alias-tips" "https://github.com/ohmybash/oh-my-bash.git" "$HOME/.oh-my-bash/plugins/alias-tips"
-    install_omb_plugin "colored-man-pages" "https://github.com/ohmybash/oh-my-bash.git" "$HOME/.oh-my-bash/plugins/colored-man-pages"
-    install_omb_plugin "extract" "https://github.com/ohmybash/oh-my-bash.git" "$HOME/.oh-my-bash/plugins/extract"
-    install_omb_plugin "history" "https://github.com/ohmybash/oh-my-bash.git" "$HOME/.oh-my-bash/plugins/history"
-    install_omb_plugin "tmux" "https://github.com/ohmybash/oh-my-bash.git" "$HOME/.oh-my-bash/plugins/tmux"
-
     # Set agnoster theme
     if [ -f "$HOME/.bashrc" ]; then
         if ! grep -q "OSH_THEME=" "$HOME/.bashrc" 2>/dev/null; then
@@ -176,6 +155,42 @@ install_oh_my_bash() {
             echo "OSH_THEME=\"agnoster\"" >> "$HOME/.bashrc"
         fi
     fi
+}
+
+# Install Oh My Bash plugins
+install_omb_plugins() {
+    echo ""
+    echo "Installing Oh My Bash plugins..."
+
+    local omb_plugins_dir="$HOME/.oh-my-bash/plugins"
+    local plugins=(
+        docker
+        docker-compose
+        alias-tips
+        colored-man-pages
+        extract
+        history
+        tmux
+    )
+
+    for plugin in "${plugins[@]}"; do
+        local target="$HOME/.oh-my-bash/custom/plugins/$plugin"
+        if [ ! -d "$target" ]; then
+            echo "Installing plugin: $plugin"
+            mkdir -p "$target"
+            # Copy from OMB built-in plugins if available
+            if [ -d "$omb_plugins_dir/$plugin" ]; then
+                cp -r "$omb_plugins_dir/$plugin"/* "$target"/
+            else
+                # Clone from GitHub if not in OMB
+                git clone --depth 1 https://github.com/ohmybash/oh-my-bash.git /tmp/omb-temp 2>/dev/null
+                if [ -d "/tmp/omb-temp/plugins/$plugin" ]; then
+                    cp -r /tmp/omb-temp/plugins/$plugin/* "$target"/
+                fi
+                rm -rf /tmp/omb-temp
+            fi
+        fi
+    done
 }
 
 # Main
@@ -198,6 +213,10 @@ install_vim_plugins
 echo ""
 echo "Step 5: Installing Oh My Bash..."
 install_oh_my_bash
+
+echo ""
+echo "Step 6: Installing Oh My Bash plugins..."
+install_omb_plugins
 
 echo ""
 echo "========================================="

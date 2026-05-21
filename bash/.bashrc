@@ -126,12 +126,18 @@ if [ -f "$HOME/.oh-my-bash/oh-my-bash.sh" ]; then
     OSH="$HOME/.oh-my-bash"
     OSH_THEME="agnoster"
 
-    # Plugins (only include ones that exist in your OMB installation)
-    # Check available plugins: ls ~/.oh-my-bash/plugins/
+    # Plugins
     plugins=(
         git
-        sudo
+        docker
+        docker-compose
         fzf
+        sudo
+        alias-tips
+        colored-man-pages
+        extract
+        history
+        tmux
     )
 
     source "$OSH/oh-my-bash.sh"

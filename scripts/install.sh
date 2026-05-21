@@ -191,6 +191,29 @@ install_omb_custom_plugins() {
     fi
 }
 
+# Remove atuin if installed (conflicts with bash prompt)
+remove_atuin() {
+    echo ""
+    echo "Removing atuin (conflicts with prompt)..."
+
+    # Remove atuin init from .bashrc
+    if [ -f "$HOME/.bashrc" ]; then
+        sed -i '/atuin init/d' "$HOME/.bashrc" 2>/dev/null
+    fi
+
+    # Remove atuin binary and config
+    if [ -d "$HOME/.atuin" ]; then
+        rm -rf "$HOME/.atuin"
+    fi
+
+    # Remove atuin from PATH
+    if [ -d "$HOME/.atuin/bin" ]; then
+        rm -rf "$HOME/.atuin/bin"
+    fi
+
+    echo "Atuin removed."
+}
+
 # Main
 echo ""
 echo "Step 1: Installing packages..."
@@ -215,6 +238,10 @@ install_oh_my_bash
 echo ""
 echo "Step 6: Installing Oh My Bash custom plugins..."
 install_omb_custom_plugins
+
+echo ""
+echo "Step 7: Removing atuin (conflicts with prompt)..."
+remove_atuin
 
 echo ""
 echo "========================================="

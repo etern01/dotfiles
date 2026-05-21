@@ -135,6 +135,23 @@ install_tools() {
     fi
 }
 
+# Install vim plugins
+install_vim_plugins() {
+    echo ""
+    echo "Installing vim plugins..."
+
+    # Install vim-plug if not present
+    if [ ! -f "$HOME/.vim/autoload/plug.vim" ]; then
+        echo "Installing vim-plug..."
+        mkdir -p "$HOME/.vim/autoload"
+        curl -fLo "$HOME/.vim/autoload/plug.vim" --create-dirs \
+            https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+    fi
+
+    # Install plugins
+    vim +PlugInstall +qall 2>/dev/null || true
+}
+
 # Install Oh My Bash
 install_oh_my_bash() {
     echo ""

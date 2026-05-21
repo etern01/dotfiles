@@ -127,12 +127,6 @@ install_tools() {
         sudo mv /tmp/lazygit /usr/local/bin/lazygit
         sudo chmod +x /usr/local/bin/lazygit
     fi
-
-    # atuin - shell history sync
-    if ! command -v atuin &>/dev/null; then
-        echo "Installing atuin..."
-        curl --proto '=https' --tlsv1.2 -LsSf https://setup.atuin.sh | sh
-    fi
 }
 
 # Install vim plugins

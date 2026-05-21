@@ -133,7 +133,6 @@ if [ -f "$HOME/.oh-my-bash/oh-my-bash.sh" ]; then
         docker-compose
         fzf
         sudo
-        alias-tips
         colored-man-pages
         extract
         history

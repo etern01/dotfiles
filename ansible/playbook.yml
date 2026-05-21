@@ -231,7 +231,6 @@
       loop:
         - docker
         - docker-compose
-        - alias-tips
         - extract
         - history
       tags: omb

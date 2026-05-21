@@ -130,8 +130,14 @@ if [ -f "$HOME/.oh-my-bash/oh-my-bash.sh" ]; then
     plugins=(
         git
         docker
+        docker-compose
         fzf
         sudo
+        alias-tips
+        colored-man-pages
+        extract
+        history
+        tmux
     )
 
     source "$OSH/oh-my-bash.sh"

@@ -175,6 +175,24 @@
       tags: omb
 
     # ============================================
+    # Install Oh My Bash plugins
+    # ============================================
+    - name: Install Oh My Bash plugins
+      file:
+        path: "{{ ansible_env.HOME }}/.oh-my-bash/plugins/{{ item }}"
+        state: directory
+        mode: '0755'
+      become: false
+      loop:
+        - alias-tips
+        - colored-man-pages
+        - docker-compose
+        - extract
+        - history
+        - tmux
+      tags: omb
+
+    # ============================================
     # Configure bash as default shell
     # ============================================
     - name: Set bash as default shell

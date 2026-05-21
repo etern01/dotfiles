@@ -196,25 +196,24 @@ remove_atuin() {
     echo ""
     echo "Removing atuin (conflicts with prompt)..."
 
-    # Remove atuin init from .bashrc
-    if [ -f "$HOME/.bashrc" ]; then
-        sed -i '/atuin/d' "$HOME/.bashrc" 2>/dev/null
-    fi
+    # Remove ALL atuin lines from shell configs
+    local configs=("$HOME/.bashrc" "$HOME/.bash_aliases" "$HOME/.profile" "$HOME/.bash_profile")
+    for config in "${configs[@]}"; do
+        if [ -f "$config" ]; then
+            sed -i '/atuin/d' "$config" 2>/dev/null
+            sed -i '/ATUIN/d' "$config" 2>/dev/null
+        fi
+    done
 
-    # Remove atuin from PATH
-    if [ -d "$HOME/.atuin" ]; then
-        rm -rf "$HOME/.atuin"
-    fi
+    # Remove atuin directory
+    rm -rf "$HOME/.atuin" 2>/dev/null
 
-    # Remove atuin binary from common locations
+    # Remove atuin binary
     rm -f "$HOME/.local/bin/atuin" 2>/dev/null
     rm -f "/usr/local/bin/atuin" 2>/dev/null
 
-    # Clean PATH from atuin references
-    if [ -f "$HOME/.bashrc" ]; then
-        sed -i 's|$HOME/.atuin/bin:||g' "$HOME/.bashrc" 2>/dev/null
-        sed -i 's|/home/[^/]*/.atuin/bin:||g' "$HOME/.bashrc" 2>/dev/null
-    fi
+    # Remove atuin from PATH in current session
+    export PATH=$(echo "$PATH" | tr ':' '\n' | grep -v atuin | tr '\n' ':' | sed 's/:$//')
 
     echo "Atuin removed."
 }

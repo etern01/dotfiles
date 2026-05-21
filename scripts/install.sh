@@ -157,40 +157,21 @@ install_oh_my_bash() {
     fi
 }
 
-# Install Oh My Bash plugins
-install_omb_plugins() {
+# Install Oh My Bash custom plugins
+install_omb_custom_plugins() {
     echo ""
-    echo "Installing Oh My Bash plugins..."
+    echo "Installing Oh My Bash custom plugins..."
 
-    local omb_plugins_dir="$HOME/.oh-my-bash/plugins"
-    local plugins=(
-        docker
-        docker-compose
-        alias-tips
-        colored-man-pages
-        extract
-        history
-        tmux
-    )
+    local custom_dir="$HOME/.oh-my-bash/custom/plugins"
+    mkdir -p "$custom_dir"
 
-    for plugin in "${plugins[@]}"; do
-        local target="$HOME/.oh-my-bash/custom/plugins/$plugin"
-        if [ ! -d "$target" ]; then
-            echo "Installing plugin: $plugin"
-            mkdir -p "$target"
-            # Copy from OMB built-in plugins if available
-            if [ -d "$omb_plugins_dir/$plugin" ]; then
-                cp -r "$omb_plugins_dir/$plugin"/* "$target"/
-            else
-                # Clone from GitHub if not in OMB
-                git clone --depth 1 https://github.com/ohmybash/oh-my-bash.git /tmp/omb-temp 2>/dev/null
-                if [ -d "/tmp/omb-temp/plugins/$plugin" ]; then
-                    cp -r /tmp/omb-temp/plugins/$plugin/* "$target"/
-                fi
-                rm -rf /tmp/omb-temp
-            fi
-        fi
-    done
+    # Copy custom plugins from dotfiles repository
+    if [ -d "$DOTFILES_DIR/plugins" ]; then
+        cp -r "$DOTFILES_DIR/plugins/"* "$custom_dir"/
+        echo "Custom plugins installed!"
+    else
+        echo "No custom plugins found in $DOTFILES_DIR/plugins"
+    fi
 }
 
 # Main
@@ -215,8 +196,8 @@ echo "Step 5: Installing Oh My Bash..."
 install_oh_my_bash
 
 echo ""
-echo "Step 6: Installing Oh My Bash plugins..."
-install_omb_plugins
+echo "Step 6: Installing Oh My Bash custom plugins..."
+install_omb_custom_plugins
 
 echo ""
 echo "========================================="

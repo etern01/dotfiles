@@ -1,0 +1,12 @@
+# Docker aliases
+alias d='docker'
+alias dps='docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"'
+alias dpsa='docker ps -a --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"'
+alias di='docker images'
+alias dl='docker logs -f --tail 100'
+alias dexec='docker exec -it'
+alias dstop='docker stop'
+alias drm='docker rm'
+alias drmi='docker rmi'
+alias dvolumes='docker volume ls'
+alias dnetworks='docker network ls'

@@ -212,21 +212,28 @@
       tags: omb
 
     # ============================================
-    # Install Oh My Bash plugins
+    # Install Oh My Bash custom plugins
     # ============================================
-    - name: Install Oh My Bash plugins
+    - name: Create Oh My Bash custom plugins directory
       file:
-        path: "{{ ansible_env.HOME }}/.oh-my-bash/plugins/{{ item }}"
+        path: "{{ ansible_env.HOME }}/.oh-my-bash/custom/plugins"
         state: directory
         mode: '0755'
       become: false
+      tags: omb
+
+    - name: Install Oh My Bash custom plugins
+      copy:
+        src: "plugins/{{ item }}/"
+        dest: "{{ ansible_env.HOME }}/.oh-my-bash/custom/plugins/{{ item }}/"
+        mode: '0755'
+      become: false
       loop:
-        - alias-tips
-        - colored-man-pages
+        - docker
         - docker-compose
+        - alias-tips
         - extract
         - history
-        - tmux
       tags: omb
 
     # ============================================

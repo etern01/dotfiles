@@ -1,5 +1,5 @@
 # ~/.bash_prompt - Custom prompt configuration
-# Defines PS1 with git branch, environment indicator, and exit code
+# Powerline-style prompt with root/non-root distinction
 
 # ============================================
 # Colors (without \[\] - added in PS1)
@@ -15,8 +15,30 @@ CYAN='\033[0;36m'
 WHITE='\033[0;37m'
 GRAY='\033[0;90m'
 
-# Escape sequences for PS1
-function _p() { echo -n "\[$1\]"; }
+# Background colors
+BG_RED='\033[41m'
+BG_GREEN='\033[42m'
+BG_BLUE='\033[44m'
+BG_YELLOW='\033[43m'
+BG_MAGENTA='\033[45m'
+BG_CYAN='\033[46m'
+BG_GRAY='\033[100m'
+
+# Powerline separators
+SEP_RIGHT=""
+SEP_LEFT=""
+GIT_SYMBOL=""
+
+# Fallback to ASCII if powerline fonts not available
+if [ -z "${POWERLINE_FONTS:-}" ]; then
+    case "$TERM" in
+        *linux|*vt*)
+            SEP_RIGHT=">"
+            SEP_LEFT="<"
+            GIT_SYMBOL="*"
+            ;;
+    esac
+fi
 
 # ============================================
 # Environment detection
@@ -40,7 +62,7 @@ parse_git_branch() {
     local branch
     branch=$(git symbolic-ref --short HEAD 2>/dev/null || git describe --tags --exact-match 2>/dev/null)
     if [ -n "$branch" ]; then
-        echo " ($branch)"
+        echo "$branch"
     fi
 }
 
@@ -54,38 +76,82 @@ build_prompt() {
     local git_branch=$(parse_git_branch)
     local env=$(detect_env)
 
-    # Color user based on root or not
-    local user_color=$GREEN
+    # Root detection
+    local is_root=0
     if [ "$EUID" -eq 0 ]; then
-        user_color=$RED
+        is_root=1
     fi
 
-    # Color environment indicator
-    local env_color=$GRAY
-    local env_display=""
+    # ============================================
+    # Exit code indicator
+    # ============================================
+    local exit_segment=""
+    if [ $last_exit -ne 0 ]; then
+        exit_segment="\[$BG_RED\]\[$WHITE\] ✘ \[$RESET\]\[$BG_GRAY\]\[$WHITE\]$SEP_RIGHT\[$RESET\]"
+    fi
+
+    # ============================================
+    # User@Host segment
+    # ============================================
+    local user_bg
+    local user_fg
+    if [ $is_root -eq 1 ]; then
+        user_bg=$BG_RED
+        user_fg=$WHITE
+    else
+        user_bg=$BG_GREEN
+        user_fg=$WHITE
+    fi
+
+    local user_segment="\[$user_bg\]\[$user_fg\] \u@\h \[$RESET\]"
+
+    # ============================================
+    # Path segment
+    # ============================================
+    local path_segment="\[$BG_BLUE\]\[$WHITE\] \w \[$RESET\]\[$BG_YELLOW\]\[$WHITE\]$SEP_RIGHT\[$RESET\]"
+
+    # ============================================
+    # Git segment
+    # ============================================
+    local git_segment=""
+    if [ -n "$git_branch" ]; then
+        git_segment="\[$BG_YELLOW\]\[$BLACK\] $GIT_SYMBOL $git_branch \[$RESET\]\[$BG_GRAY\]\[$WHITE\]$SEP_RIGHT\[$RESET\]"
+    fi
+
+    # ============================================
+    # Environment segment
+    # ============================================
+    local env_segment=""
+    local env_bg=""
+    local env_fg=$WHITE
     case "$env" in
         PROD)
-            env_color=$RED
-            env_display=" [PROD]"
+            env_bg=$BG_RED
+            env_segment="\[$env_bg\]\[$env_fg\] $env \[$RESET\]"
             ;;
         STAGE)
-            env_color=$YELLOW
-            env_display=" [STAGE]"
+            env_bg=$BG_YELLOW
+            env_fg=$BLACK
+            env_segment="\[$env_bg\]\[$env_fg\] $env \[$RESET\]"
             ;;
         DEV)
-            env_color=$CYAN
-            env_display=" [DEV]"
+            env_bg=$BG_CYAN
+            env_segment="\[$env_bg\]\[$env_fg\] $env \[$RESET\]"
             ;;
     esac
 
-    # Exit code indicator
-    local exit_code=""
-    if [ $last_exit -ne 0 ]; then
-        exit_code=" [$last_exit]"
+    # ============================================
+    # Prompt symbol
+    # ============================================
+    local prompt_symbol="\[$GREEN\]\\$\[$RESET\] "
+    if [ $is_root -eq 1 ]; then
+        prompt_symbol="\[$RED\]#\[$RESET\] "
     fi
 
-    # Build PS1 with proper escaping
-    PS1="\[$user_color\]\u\[$RESET\]@\[$CYAN\]\h\[$RESET\]:\[$BLUE\]\w\[$RESET\]\[$MAGENTA\]${git_branch}\[$RESET\]\[$env_color\]${env_display}\[$RESET\]\[$GRAY\]${exit_code}\[$RESET\]\n\$ "
+    # ============================================
+    # Build PS1
+    # ============================================
+    PS1="${exit_segment}${user_segment}\[$BG_BLUE\]\[$WHITE\]$SEP_RIGHT\[$RESET\]${path_segment}${git_segment}${env_segment}\n${prompt_symbol}"
 
     # Set window title
     PS1="\[\e]0;\u@\h: \w\a\]${PS1}"

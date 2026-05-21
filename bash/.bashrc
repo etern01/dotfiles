@@ -107,6 +107,13 @@ if [ -z "$SSH_AUTH_SOCK" ]; then
 fi
 
 # ============================================
+# Colorized output (grc)
+# ============================================
+if command -v grc &>/dev/null; then
+    . /usr/share/grc/grc.bashrc
+fi
+
+# ============================================
 # Welcome message (first login)
 # ============================================
 if [ -z "$DOTFILES_WELCOMED" ]; then
@@ -116,4 +123,12 @@ if [ -z "$DOTFILES_WELCOMED" ]; then
     echo "  OS: $(cat /etc/os-release 2>/dev/null | grep PRETTY_NAME | cut -d'\"' -f2)"
     echo "  Uptime: $(uptime -p 2>/dev/null || uptime)"
     echo "============================================="
+fi
+
+# ============================================
+# Auto-start tmux on SSH login
+# ============================================
+if command -v tmux &>/dev/null && [ -z "$TMUX" ] && [ -n "$SSH_CLIENT" ]; then
+    tmux attach -t main 2>/dev/null || tmux new-session -s main
+    exit
 fi

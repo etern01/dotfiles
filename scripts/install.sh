@@ -37,7 +37,7 @@ install_packages() {
                 dnsutils net-tools iproute2 nmap ncat mtr socat \
                 tcpdump iftop nethogs \
                 strace lsof iotop sysstat \
-                ncdu lnav fzf ripgrep fd-find bat \
+                ncdu lnav fzf ripgrep fd-find bat grc \
                 git bash-completion \
                 ansible
             ;;

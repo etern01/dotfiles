@@ -51,6 +51,7 @@
           - ripgrep
           - fd-find
           - bat
+          - grc
           - git
           - bash-completion
           - openssh-client

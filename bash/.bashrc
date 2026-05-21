@@ -95,7 +95,7 @@ fi
 # ============================================
 # Colorized output (grc)
 # ============================================
-if command -v grc &>/dev/null; then
+if [ -f /usr/share/grc/grc.bashrc ]; then
     . /usr/share/grc/grc.bashrc
 fi
 
@@ -126,18 +126,12 @@ if [ -f "$HOME/.oh-my-bash/oh-my-bash.sh" ]; then
     OSH="$HOME/.oh-my-bash"
     OSH_THEME="agnoster"
 
-    # Plugins
+    # Plugins (only include ones that exist in your OMB installation)
+    # Check available plugins: ls ~/.oh-my-bash/plugins/
     plugins=(
         git
-        docker
-        docker-compose
-        fzf
         sudo
-        alias-tips
-        colored-man-pages
-        extract
-        history
-        tmux
+        fzf
     )
 
     source "$OSH/oh-my-bash.sh"

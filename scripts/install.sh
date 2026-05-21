@@ -135,6 +135,18 @@ install_tools() {
     fi
 }
 
+# Install Oh My Bash plugins from GitHub
+install_omb_plugin() {
+    local name=$1
+    local repo=$2
+    local target="$HOME/.oh-my-bash/plugins/$name"
+
+    if [ ! -d "$target" ]; then
+        echo "Installing OMB plugin: $name"
+        git clone "$repo" "$target" 2>/dev/null || echo "  Failed to install $name"
+    fi
+}
+
 # Install Oh My Bash
 install_oh_my_bash() {
     echo ""
@@ -147,13 +159,14 @@ install_oh_my_bash() {
         echo "Oh My Bash already installed"
     fi
 
-    # Install custom plugins
-    install_omb_plugin "alias-tips" "https://github.com/ohmybash/oh-my-bash.git" "plugins/alias-tips"
-    install_omb_plugin "colored-man-pages" "https://github.com/ohmybash/oh-my-bash.git" "plugins/colored-man-pages"
-    install_omb_plugin "docker-compose" "https://github.com/ohmybash/oh-my-bash.git" "plugins/docker-compose"
-    install_omb_plugin "extract" "https://github.com/ohmybash/oh-my-bash.git" "plugins/extract"
-    install_omb_plugin "history" "https://github.com/ohmybash/oh-my-bash.git" "plugins/history"
-    install_omb_plugin "tmux" "https://github.com/ohmybash/oh-my-bash.git" "plugins/tmux"
+    # Install additional plugins
+    install_omb_plugin "docker" "https://github.com/ohmybash/oh-my-bash.git" "$HOME/.oh-my-bash/plugins/docker"
+    install_omb_plugin "docker-compose" "https://github.com/ohmybash/oh-my-bash.git" "$HOME/.oh-my-bash/plugins/docker-compose"
+    install_omb_plugin "alias-tips" "https://github.com/ohmybash/oh-my-bash.git" "$HOME/.oh-my-bash/plugins/alias-tips"
+    install_omb_plugin "colored-man-pages" "https://github.com/ohmybash/oh-my-bash.git" "$HOME/.oh-my-bash/plugins/colored-man-pages"
+    install_omb_plugin "extract" "https://github.com/ohmybash/oh-my-bash.git" "$HOME/.oh-my-bash/plugins/extract"
+    install_omb_plugin "history" "https://github.com/ohmybash/oh-my-bash.git" "$HOME/.oh-my-bash/plugins/history"
+    install_omb_plugin "tmux" "https://github.com/ohmybash/oh-my-bash.git" "$HOME/.oh-my-bash/plugins/tmux"
 
     # Set agnoster theme
     if [ -f "$HOME/.bashrc" ]; then
@@ -162,21 +175,6 @@ install_oh_my_bash() {
             echo "# Oh My Bash theme" >> "$HOME/.bashrc"
             echo "OSH_THEME=\"agnoster\"" >> "$HOME/.bashrc"
         fi
-    fi
-}
-
-# Install Oh My Bash plugin
-install_omb_plugin() {
-    local name=$1
-    local repo=$2
-    local path=$3
-    local target="$HOME/.oh-my-bash/plugins/$name"
-
-    if [ ! -d "$target" ]; then
-        echo "Installing OMB plugin: $name"
-        # For built-in OMB plugins, they're already included
-        # For external plugins, we'd clone them
-        echo "  (plugin $name is included in Oh My Bash)"
     fi
 }
 

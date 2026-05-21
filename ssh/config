@@ -1,0 +1,84 @@
+# ~/.ssh/config - SSH configuration template
+# ============================================
+# Copy to ~/.ssh/config and customize for your hosts
+# DO NOT commit SSH keys to this repository
+
+# ============================================
+# Global defaults
+# ============================================
+Host *
+    # Connection settings
+    ServerAliveInterval 60
+    ServerAliveCountMax 30
+    ConnectTimeout 10
+    TCPKeepAlive yes
+
+    # Security
+    StrictHostKeyChecking ask
+    PasswordAuthentication no
+    IdentitiesOnly yes
+
+    # Multiplexing (faster subsequent connections)
+    ControlMaster auto
+    ControlPath ~/.ssh/sockets/%r@%h-%p
+    ControlPersist 600
+
+    # Forwarding
+    ForwardAgent no
+    ForwardX11 no
+
+# ============================================
+# Connection multiplexing socket directory
+# ============================================
+# Create with: mkdir -p ~/.ssh/sockets
+
+# ============================================
+# Example host configurations
+# ============================================
+
+# Production servers
+# Host prod-*
+#     User deploy
+#     IdentityFile ~/.ssh/id_ed25519_prod
+#     Port 22
+#     # ENV_TYPE=PROD  # Set environment for prompt
+
+# Staging servers
+# Host stage-*
+#     User deploy
+#     IdentityFile ~/.ssh/id_ed25519_stage
+#     Port 22
+#     # ENV_TYPE=STAGE  # Set environment for prompt
+
+# Development servers
+# Host dev-*
+#     User admin
+#     IdentityFile ~/.ssh/id_ed25519
+#     Port 22
+#     # ENV_TYPE=DEV  # Set environment for prompt
+
+# Proxmox hosts
+# Host proxmox-*
+#     User root
+#     IdentityFile ~/.ssh/id_ed25519
+#     Port 22
+
+# Jump host / Bastion
+# Host bastion
+#     User admin
+#     HostName bastion.example.com
+#     IdentityFile ~/.ssh/id_ed25519
+#     Port 22
+
+# Hosts behind bastion
+# Host internal-*
+#     User admin
+#     ProxyJump bastion
+#     IdentityFile ~/.ssh/id_ed25519
+
+# ============================================
+# Usage examples
+# ============================================
+# Connect: ssh prod-web01
+# With env: ENV_TYPE=PROD ssh prod-web01
+# Or set in ~/.bashrc on remote host

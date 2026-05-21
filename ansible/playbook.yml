@@ -1,0 +1,165 @@
+---
+# Ansible playbook for dotfiles deployment
+# Usage: ansible-playbook -i inventory.ini playbook.yml
+
+- name: Deploy dotfiles and install packages
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars:
+    dotfiles_dir: "~/.dotfiles"
+    dotfiles_repo: "https://github.com/yourusername/dotfiles.git"
+
+  tasks:
+    # ============================================
+    # Install packages (Debian/Ubuntu)
+    # ============================================
+    - name: Update apt cache
+      apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install base packages
+      apt:
+        name:
+          - htop
+          - tmux
+          - vim
+          - jq
+          - tree
+          - curl
+          - wget
+          - rsync
+          - dnsutils
+          - net-tools
+          - iproute2
+          - nmap
+          - ncat
+          - mtr-tiny
+          - socat
+          - tcpdump
+          - iftop
+          - nethogs
+          - strace
+          - lsof
+          - iotop
+          - sysstat
+          - ncdu
+          - lnav
+          - fzf
+          - ripgrep
+          - fd-find
+          - bat
+          - git
+          - bash-completion
+          - openssh-client
+        state: present
+
+    - name: Install Docker (if not present)
+      block:
+        - name: Add Docker GPG key
+          apt_key:
+            url: https://download.docker.com/linux/ubuntu/gpg
+            state: present
+
+        - name: Add Docker repository
+          apt_repository:
+            repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+            state: present
+
+        - name: Install Docker packages
+          apt:
+            name:
+              - docker-ce
+              - docker-ce-cli
+              - containerd.io
+              - docker-compose-plugin
+            state: present
+
+        - name: Add user to docker group
+          user:
+            name: "{{ ansible_user }}"
+            groups: docker
+            append: true
+      when: ansible_distribution in ['Ubuntu', 'Debian']
+      tags: docker
+
+    # ============================================
+    # Clone dotfiles repository
+    # ============================================
+    - name: Clone dotfiles repository
+      git:
+        repo: "{{ dotfiles_repo }}"
+        dest: "{{ dotfiles_dir }}"
+        version: main
+        force: true
+      become: false
+      tags: dotfiles
+
+    # ============================================
+    # Create symlinks
+    # ============================================
+    - name: Create symlinks for dotfiles
+      file:
+        src: "{{ dotfiles_dir }}/{{ item.src }}"
+        dest: "{{ ansible_env.HOME }}/{{ item.dest }}"
+        state: link
+        force: true
+      become: false
+      loop:
+        - { src: 'bash/.bashrc', dest: '.bashrc' }
+        - { src: 'bash/.bash_aliases', dest: '.bash_aliases' }
+        - { src: 'bash/.bash_functions', dest: '.bash_functions' }
+        - { src: 'bash/.bash_prompt', dest: '.bash_prompt' }
+        - { src: 'vim/.vimrc', dest: '.vimrc' }
+        - { src: 'tmux/.tmux.conf', dest: '.tmux.conf' }
+      tags: dotfiles
+
+    - name: Create SSH config symlink (if not exists)
+      file:
+        src: "{{ dotfiles_dir }}/ssh/config"
+        dest: "{{ ansible_env.HOME }}/.ssh/config"
+        state: link
+        force: false
+      become: false
+      tags: dotfiles
+
+    # ============================================
+    # Install vim plugins
+    # ============================================
+    - name: Install vim-plug
+      get_url:
+        url: https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+        dest: "{{ ansible_env.HOME }}/.local/share/nvim/site/autoload/plug.vim"
+        mode: '0644'
+      become: false
+      tags: vim
+
+    - name: Install vim plugins
+      command: vim +PlugInstall +qall
+      become: false
+      environment:
+        HOME: "{{ ansible_env.HOME }}"
+      tags: vim
+      changed_when: false
+
+    # ============================================
+    # Create SSH sockets directory
+    # ============================================
+    - name: Create SSH sockets directory
+      file:
+        path: "{{ ansible_env.HOME }}/.ssh/sockets"
+        state: directory
+        mode: '0700'
+      become: false
+      tags: ssh
+
+    # ============================================
+    # Configure bash as default shell
+    # ============================================
+    - name: Set bash as default shell
+      user:
+        name: "{{ ansible_user }}"
+        shell: /bin/bash
+      tags: shell

@@ -1,0 +1,30 @@
+# Secrets and keys
+*.key
+*.pem
+id_*
+*.secret
+*.env.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Vim
+*.swp
+*.swo
+*~
+.plugged/
+
+# Tmux
+*.sock
+
+# SSH
+sockets/
+known_hosts
+
+# Ansible
+*.retry
+vault.yml
+
+# Local overrides
+.local/

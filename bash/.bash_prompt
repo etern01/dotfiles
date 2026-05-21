@@ -1,0 +1,103 @@
+# ~/.bash_prompt - Custom prompt configuration
+# Defines PS1 with git branch, environment indicator, and exit code
+
+# ============================================
+# Colors
+# ============================================
+RESET='\[\033[0m\]'
+BOLD='\[\033[1m\]'
+RED='\[\033[0;31m\]'
+GREEN='\[\033[0;32m\]'
+YELLOW='\[\033[0;33m\]'
+BLUE='\[\033[0;34m\]'
+MAGENTA='\[\033[0;35m\]'
+CYAN='\[\033[0;36m\]'
+WHITE='\[\033[0;37m\]'
+GRAY='\[\033[0;90m\]'
+
+# ============================================
+# Environment detection
+# ============================================
+# Detect environment based on hostname or env variable
+detect_env() {
+    local env_indicator=""
+
+    if [ -n "$ENV_TYPE" ]; then
+        env_indicator="$ENV_TYPE"
+    elif [[ "$HOSTNAME" == *"prod"* ]] || [[ "$HOSTNAME" == *"production"* ]]; then
+        env_indicator="PROD"
+    elif [[ "$HOSTNAME" == *"staging"* ]] || [[ "$HOSTNAME" == *"stage"* ]]; then
+        env_indicator="STAGE"
+    elif [[ "$HOSTNAME" == *"dev"* ]] || [[ "$HOSTNAME" == *"development"* ]]; then
+        env_indicator="DEV"
+    fi
+
+    echo "$env_indicator"
+}
+
+# ============================================
+# Git branch
+# ============================================
+parse_git_branch() {
+    local branch
+    branch=$(git symbolic-ref --short HEAD 2>/dev/null || git describe --tags --exact-match 2>/dev/null)
+    if [ -n "$branch" ]; then
+        echo " ($branch)"
+    fi
+}
+
+# ============================================
+# Exit code indicator
+# ============================================
+show_exit_code() {
+    local last_exit=$?
+    if [ $last_exit -ne 0 ]; then
+        echo " [$last_exit]"
+    fi
+}
+
+# ============================================
+# Build prompt
+# ============================================
+build_prompt() {
+    local exit_code=$(show_exit_code)
+    local git_branch=$(parse_git_branch)
+    local env=$(detect_env)
+
+    # Color user based on root or not
+    local user_color="$GREEN"
+    if [ "$EUID" -eq 0 ]; then
+        user_color="$RED"
+    fi
+
+    # Color environment indicator
+    local env_color=""
+    local env_display=""
+    case "$env" in
+        PROD)
+            env_color="$RED"
+            env_display=" [PROD]"
+            ;;
+        STAGE)
+            env_color="$YELLOW"
+            env_display=" [STAGE]"
+            ;;
+        DEV)
+            env_color="$CYAN"
+            env_display=" [DEV]"
+            ;;
+        *)
+            env_color="$GRAY"
+            env_display=""
+            ;;
+    esac
+
+    # Build PS1
+    PS1="${user_color}\u${RESET}@${CYAN}\h${RESET}:${BLUE}\w${RESET}${MAGENTA}${git_branch}${RESET}${env_color}${env_display}${RESET}${GRAY}${exit_code}${RESET}\n\$ "
+
+    # Set window title
+    PS1="\[\e]0;\u@\h: \w\a\]${PS1}"
+}
+
+# Set prompt command
+PROMPT_COMMAND="build_prompt; ${PROMPT_COMMAND:-}"

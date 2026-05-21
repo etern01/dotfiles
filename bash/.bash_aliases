@@ -2,6 +2,12 @@
 # Organized by category
 
 # ============================================
+# Sudo fallback (if OMB sudo plugin doesn't work)
+# ============================================
+# Double Esc to prepend sudo to last command
+bind '"\e\e": "\C-asudo \C-m"'
+
+# ============================================
 # Navigation & Listing
 # ============================================
 alias ll='ls -alhF --color=auto'

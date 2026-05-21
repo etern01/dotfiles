@@ -33,11 +33,12 @@ install_packages() {
         debian|ubuntu)
             sudo apt-get update
             sudo apt-get install -y \
-                htop tmux vim jq tree curl wget rsync \
+                htop btop tmux vim jq tree curl wget rsync \
                 dnsutils net-tools iproute2 nmap ncat mtr socat \
                 tcpdump iftop nethogs \
                 strace lsof iotop sysstat \
                 ncdu lnav fzf ripgrep fd-find bat grc \
+                zoxide httpie \
                 git bash-completion \
                 ansible
             ;;
@@ -105,21 +106,33 @@ create_symlinks() {
     fi
 }
 
-# Install vim plugins
-install_vim_plugins() {
+# Install additional tools from GitHub releases
+install_tools() {
     echo ""
-    echo "Installing vim plugins..."
+    echo "Installing additional tools..."
 
-    # Install vim-plug if not present
-    if [ ! -f "$HOME/.vim/autoload/plug.vim" ]; then
-        echo "Installing vim-plug..."
-        mkdir -p "$HOME/.vim/autoload"
-        curl -fLo "$HOME/.vim/autoload/plug.vim" --create-dirs \
-            https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+    # yq - YAML processor
+    if ! command -v yq &>/dev/null; then
+        echo "Installing yq..."
+        curl -sL https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -o /tmp/yq
+        sudo mv /tmp/yq /usr/local/bin/yq
+        sudo chmod +x /usr/local/bin/yq
     fi
 
-    # Install plugins
-    vim +PlugInstall +qall 2>/dev/null || true
+    # lazygit - terminal UI for git
+    if ! command -v lazygit &>/dev/null; then
+        echo "Installing lazygit..."
+        local lazygit_version=$(curl -sL https://api.github.com/repos/jesseduffield/lazygit/releases/latest | jq -r '.tag_name | ltrimstr("v")')
+        curl -sL "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${lazygit_version}_Linux_x86_64.tar.gz" | tar xz -C /tmp
+        sudo mv /tmp/lazygit /usr/local/bin/lazygit
+        sudo chmod +x /usr/local/bin/lazygit
+    fi
+
+    # atuin - shell history sync
+    if ! command -v atuin &>/dev/null; then
+        echo "Installing atuin..."
+        curl --proto '=https' --tlsv1.2 -LsSf https://setup.atuin.sh | sh
+    fi
 }
 
 # Install Oh My Bash
@@ -173,15 +186,19 @@ echo "Step 1: Installing packages..."
 install_packages
 
 echo ""
-echo "Step 2: Creating symlinks..."
+echo "Step 2: Installing additional tools..."
+install_tools
+
+echo ""
+echo "Step 3: Creating symlinks..."
 create_symlinks
 
 echo ""
-echo "Step 3: Installing vim plugins..."
+echo "Step 4: Installing vim plugins..."
 install_vim_plugins
 
 echo ""
-echo "Step 4: Installing Oh My Bash..."
+echo "Step 5: Installing Oh My Bash..."
 install_oh_my_bash
 
 echo ""

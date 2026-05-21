@@ -61,7 +61,10 @@ source ~/.bash_prompt
 # ============================================
 # Set PROMPT_COMMAND (history + prompt)
 # ============================================
-PROMPT_COMMAND="history -a; history -c; history -r; build_prompt; ${PROMPT_COMMAND:-}"
+# Use a guard to prevent accumulation on multiple source
+if [[ "$PROMPT_COMMAND" != *"build_prompt"* ]]; then
+    PROMPT_COMMAND="history -a; history -c; history -r; build_prompt; ${PROMPT_COMMAND:-}"
+fi
 
 # ============================================
 # Load aliases

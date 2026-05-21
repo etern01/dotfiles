@@ -93,6 +93,8 @@ parse_git_dirty() {
 build_prompt() {
     local last_exit=$?
 
+    # Reset PS1 to avoid accumulation
+    PS1=""
     CURRENT_BG=""
 
     # Exit code segment

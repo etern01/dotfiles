@@ -184,7 +184,13 @@ install_omb_custom_plugins() {
 
     # Copy custom plugins from dotfiles repository
     if [ -d "$DOTFILES_DIR/plugins" ]; then
-        cp -r "$DOTFILES_DIR/plugins/"* "$custom_dir"/
+        for plugin_dir in "$DOTFILES_DIR/plugins/"*/; do
+            local plugin_name=$(basename "$plugin_dir")
+            local target_dir="$custom_dir/$plugin_name"
+            mkdir -p "$target_dir"
+            cp "$plugin_dir"/*.plugin.sh "$target_dir"/ 2>/dev/null
+            echo "  Installed: $plugin_name"
+        done
         echo "Custom plugins installed!"
     else
         echo "No custom plugins found in $DOTFILES_DIR/plugins"
